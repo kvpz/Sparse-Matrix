@@ -1,0 +1,39 @@
+
+These are the specs for the four file types representing
+vector, matrix, sparse vector, and sparse matrix
+
+======================================
+matrix file
+suffix = .mat
+
+first  size_t entry = m = number of rows
+second size_t entry = n = number of columns
+followed by m*n type N entries, the correct number of entries to populate an mxn matrix
+
+documentation may follow the entries
+======================================
+
+======================================
+vector file
+suffix .vec
+first entry = n = size
+followed by n type N entries
+
+documentation may follow the entries
+======================================
+
+======================================
+sparse matrix file
+suffix = .sm
+an undetermined number of triples of the form
+size_t size_t N
+each triple represents the coordinates and value of a matrix entry
+======================================
+
+======================================
+sparse vector file
+suffix = .sv
+an undetermined number of pairs of the form
+size_t N
+each pair represents the index and value of a vector entry
+======================================
