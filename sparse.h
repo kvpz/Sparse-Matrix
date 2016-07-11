@@ -4,7 +4,6 @@
     last modified: 7/8/16
 
     implementations missing:
-
     (1) SparseVector<N> operator* (const SparseMatrix<N>& m , const SparseVector<N>& v)
     (2) SparseMatrix<N> operator* (const SparseMatrix<N>& a , const SparseMatrix<N>& b)
     
@@ -125,7 +124,7 @@ namespace fsu
     size_t NumEntries() const;
     fsu::Pair<size_t, size_t> MaxIndices() const;
     bool Retrieve (size_t i, size_t j, N& n) const;
-
+		// bool Retrieve (size_t i, RowType& r) const;
     // improve structural efficiency
     void Rehash ( size_t size = 0 );
 
@@ -192,27 +191,37 @@ namespace fsu
   Convert ( fsu::SparseMatrix<N>& , const fsu::Matrix<N> )
   Convert ( fsu::Matrix<N>& ,       const fsu::SparseMatrix<N> )
 
-  
   The implementation of the product operators is required to be space conservative, 
   meaning that no unnecessary new elements of SparseVectors or SparseMatrices are 
   created by the product operators.
 
   The implementation of SparseMatrix * SparseVector should have runtime <= O(n), 
   where n is the number of (non-zero) elements of the SparseMatrix.
+	
  */
 template < typename N >
 fsu::SparseVector<N> operator* (const fsu::SparseMatrix<N>& a, const fsu::SparseVector<N>& v)
 {
-  fsu::SparseVector <N> w;
-  size_t rtest = 0; // index
-  N rtest2 = 0; // N == double
-  // if (Retrieve(rtest, rtest2)
-  std::cout << "SparseMatrix::NumEntries: " << a.NumEntries() << std::endl;
-  std::cout << "SparseVector::NumEntries: " << v.NumEntries() << std::endl;
-  std::cout << "StarseVector::MaxIndex: " << v.MaxIndex() << std::endl << std::endl;
-  rtest = 99;
-  std::cout << "SparseVector::Retrieve(size_t, DataType): " << v.Retrieve(rtest, rtest2) << ' ' << rtest << ' ' << rtest2<< std::endl;
-  return w;
+  fsu::SparseVector <N> result;
+	typename fsu::SparseMatrix<N>::Iterator mitr;
+	// Iterator through matrix rows
+	for(mitr = a.Begin(); mitr != a.End(); ++mitr)
+	{
+		N currentRow = (*mitr).key_;
+		typename fsu::SparseVector<N>::Iterator mvitr1;
+		mvitr1 = ((*mitr).data_).Begin(); // HashTableIterator
+		// iterating through current Matrix row
+		for(;mvitr1 != ((*mitr).data_).End(); ++mvitr1)
+		{
+			N column = (*mvitr1).key_;
+			N vectorValue = 0;
+			if(v.Retrieve(column,vectorValue)){
+				result[currentRow] += vectorValue*(*mvitr1).data_;
+			}
+		}
+		
+	}
+  return result;
 } // SM*SV 
 
 /*
