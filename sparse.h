@@ -203,6 +203,12 @@ template < typename N >
 fsu::SparseVector<N> operator* (const fsu::SparseMatrix<N>& a, const fsu::SparseVector<N>& v)
 {
   fsu::SparseVector <N> result;
+	// Check if matrix and vector can be multiplied
+	if(a.MaxIndices().second_ != v.MaxIndex())
+	{
+		std::cout << "Multiplication can't be performed" << std::endl;
+		exit(EXIT_FAILURE);
+	}
 	typename fsu::SparseMatrix<N>::Iterator mitr;
 	// Iterator through matrix rows
 	for(mitr = a.Begin(); mitr != a.End(); ++mitr)
@@ -219,17 +225,32 @@ fsu::SparseVector<N> operator* (const fsu::SparseMatrix<N>& a, const fsu::Sparse
 				result[currentRow] += vectorValue*(*mvitr1).data_;
 			}
 		}
-		
 	}
   return result;
 } // SM*SV 
 
-/*
+
 template < typename N >
 fsu::SparseMatrix<N> operator* (const fsu::SparseMatrix<N>& a, const fsu::SparseMatrix<N>& b)
 {
-  fsu::SparseMatrix <N> x;
-  return x;
+  fsu::SparseMatrix <N> result;
+	typename fsu::SparseMatrix<N>::Iterator mitr_a = a.Begin();
+	typename fsu::SparseMatrix<N>::Iterator mitr_b = b.Begin();
+	// Check dimensions/ if matrices can be multiplied
+	N columnsOfFirst = a.MaxIndices().second_;
+	N rowsOfSecond = b.MaxIndices().first_;
+
+	if(columnsOfFirst == rowsOfSecond)
+		std::cout << "Matrices can be multiplied" << std::endl;
+	else
+	{
+		std::cout << "Matrices can't be multiplied" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	
+	
+	
+  return result;
 } // SM*SM 
-*/
+
 #endif
