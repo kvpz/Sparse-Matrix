@@ -25,22 +25,27 @@ HashTable member data
 
 Functions requiring implementation:
 
-1. bool Insert( const KeyType& k, DataType& d)
-  An Entry<K,D> object is inserted into the list if the key is not in the
-   table, otherwise the data is overwritten.
-  The algorithm structure:
-   a) The appropriate bucket to place the pair (k,d) is found by "hashing the key
-      and moding by the number of buckets." 
-   b) The appropriate bucket is then to be searched sequentially for the entry
-      with that key.
-   c) If the key exists the data, d, is overwritten. Otherwise insert into
-      Bucket container.
-  Note: Insert(k,d) must satisfy unimodal semantics. Non-const iterators may be used. 
-    It returns true/ false if key was in the table. The boolean advantage is not
-    seen in proj8(COP4530).
+	1. bool Insert( const KeyType& k, DataType& d)
+		 An Entry<K,D> object is inserted into the list if the key is not in the
+     table, otherwise, if the key exists, the data is overwritten.
+		The algorithm structure:
+		a) The appropriate bucket to place the pair (k,d) is found by "hashing the key
+				and moding by the number of buckets." 
+		b) The appropriate bucket is then to be searched sequentially for the entry
+				with that key.
+		c) If the key exists the data, d, is overwritten. Otherwise insert into
+				Bucket container.
+		Note: Insert(k,d) must satisfy unimodal semantics, i.e. duplicate entries are
+			not allowed. Non-const iterators may be used. 
 
+	2. template <typename K, typename D, class H>
+     bool HashTable<K,D,H>::Remove (const K& k)
 
+	3. template <typename K, typename D, class H>
+		 bool HashTable<K,D,H>::Retrieve (const K& k, D& d) const
 
+	4. template <typename K, typename D, class H>
+		 HashTableIterator<K,D,H> HashTable<K,D,H>::Includes (const K& k) const
 HashTableIterator <K,D,H>
 ---------------------------
 tablePtr_  "identifies which table you are iterating in."
@@ -192,10 +197,10 @@ namespace fsu
     EntryType entry_(k,d);
     Iterator i;
     i.tablePtr_ = this;
-    //obtain hash value for appropriate bucket (vector index)
+    // obtain hash value for appropriate bucket (vector index)
     i.bucketNum_ = this->Index(k);
-    //for sake of clarity (deep copy)
-    BucketType& bucket = this->bucketVector_[i.bucketNum_];
+    // for sake of clarity (deep copy)
+    BucketType& bucket = this->bucketVector_[i.bucketNum_]; //bucketVector == Vector<List<Entry<K,D>>>
     i.bucketItr_ = bucket.Includes(entry_);
     if(i.bucketItr_ == bucket.End())
     {
@@ -213,28 +218,38 @@ namespace fsu
   template <typename K, typename D, class H>
   bool HashTable<K,D,H>::Remove (const K& k)
   {
-    Iterator i;
+		// create a pair
+    Iterator i; // HashTableIterator
     EntryType entry(k);
     i.bucketNum_ = this->Index(k);
-    BucketType& bucket = this->bucketVector_[i.bucketNum_];
-    if(bucket.Remove(entry))
+    BucketType& bucket = this->bucketVector_[i.bucketNum_]; // BucketType == List<Entry<K,D>>
+ 		// perform the hash search algorithm, calling appropriate bucket class method
+		if(bucket.Remove(entry)) 
     {
-      return 1;
+      return 1; // success
     }
-    return 0;
+    return 0; // failure
   }
 
   template <typename K, typename D, class H>
   bool HashTable<K,D,H>::Retrieve (const K& k, D& d) const
   {
+		/*
+			iterator HashTable::Includes()
+		*/
+		// creating HashTableIterator
     Iterator i;
+		// create a pair
     EntryType entry(k,d);
     i.bucketNum_ = this->Index(k);
-    i.bucketItr_ = this->bucketVector_[i.bucketNum_].Begin();
+    i.bucketItr_ = this->bucketVector_[i.bucketNum_].Begin(); // i.bucketItr_ == List<Entry<K,D>>::ConstIterator
     // searching through bucket for existence of entry
     i.bucketItr_ = g_find(i.bucketItr_, this->bucketVector_[i.bucketNum_].End(),entry);
+		// create appropriate hash search algorithm
+		// if key is found, place the stored data in d
     if(i.bucketItr_ != this->bucketVector_[i.bucketNum_].End())
     {
+			d = (*i.bucketItr_).data_; 
       return 1;
     }
     return 0;
