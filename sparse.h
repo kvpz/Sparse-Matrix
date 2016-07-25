@@ -124,7 +124,7 @@ namespace fsu
     size_t NumEntries() const;
     fsu::Pair<size_t, size_t> MaxIndices() const;
     bool Retrieve (size_t i, size_t j, N& n) const;
-		bool Retrieve (size_t i, RowType& r) const;  // custom/ extra implementation
+		//bool Retrieve (size_t i, RowType& r) const;  // custom/ extra implementation
     // improve structural efficiency
     void Rehash ( size_t size = 0 );
 
@@ -143,11 +143,13 @@ namespace fsu
     return 1;
   }
 
+	/*
 	template < typename N>
 	bool SparseMatrix<N>::Retrieve (size_t i, RowType& r) const
 	{
 			
 	}
+	*/
 	
   template < typename N >
   size_t SparseMatrix<N>::NumEntries() const
@@ -246,59 +248,67 @@ template < typename N >
 fsu::SparseMatrix<N> operator* (const fsu::SparseMatrix<N>& a, const fsu::SparseMatrix<N>& b)
 {
 		// Check dimensions/ if matrices can be multiplied
-	N rowsOfFirst = a.MaxIndices().first_;
 	N columnsOfFirst = a.MaxIndices().second_;
 	N rowsOfSecond = b.MaxIndices().first_;
 	
-  fsu::SparseMatrix <N> result(rowsOfFirst);
-	//typename fsu::SparseMatrix<N>::Iterator ritr = result.Begin();
-
-	if(columnsOfFirst == rowsOfSecond)
-		std::cout << "Matrices can be multiplied\n" << std::endl;
-	else if(columnsOfFirst != rowsOfSecond)
+	// result should have at least as many rows of A (a.NumEntries). Clear rows if remain zero.
+  fsu::SparseMatrix <N> result(a.NumEntries());
+	
+	if(columnsOfFirst != rowsOfSecond)
 	{
 		std::cout << "Matrices can't be multiplied" << std::endl;
 		exit(EXIT_FAILURE);
 	}	
 	
-	typename fsu::SparseMatrix<N>::Iterator mitr_a = a.Begin();
-	typename fsu::SparseMatrix<N>::Iterator mitr_b = b.Begin(); //HashTableIterator
-	//std::cout << "mitr_b: " << (*mitr_b).key_ << std::endl; // 475
-	
-	//iterating through the rows of A
+	auto mitr_a = a.Begin();  // SparseMatrix<N>::Iterator 
+	auto mitr_b = b.Begin();  // SparseMatrix<N>::Iterator = HashTableIterator
+
+	// iterate the rows of A
 	for( ; mitr_a != a.End(); ++mitr_a)
 	{
-		std::cout << "NEW ROW OF A" << std::endl;
-		//size_t current_result_row = (*mitr_a).key_;
-		typename fsu::SparseVector<N>::Iterator A_row = ((*mitr_a).data_).Begin();		
-		typename fsu::SparseVector<N>::Iterator A_rowEnd = ((*mitr_a).data_).End();
-		//typename fsu::SparseMatrix<N>::Iterator column = ((*mitr_b).data_).Begin();
-		//typename fsu::SparseMatrix<N>::Iterator columnEnd = ((*mitr_b).data_).End();
+		size_t current_A_row = (*mitr_a).key_;
+		auto A_row = ((*mitr_a).data_).Begin();		 // SparseVector<N>::Iterator 
+		auto A_rowEnd = ((*mitr_a).data_).End();   // SparseVector<N>::Iterator
 		
-		// iterates through a row of A
-		for( ; A_row != A_rowEnd; ++A_row)
+		// iterate through the nonzero columns of a row of A 
+		while(A_row != A_rowEnd) 
 		{
-			size_t  A_row_column = (*A_row).key_;
-			N       A_row_column_value = (*A_row).data_;
-			/*
-				Have to match the column of A to row of B column
-			*/
-			std::cout << "Rows of current column of B: " << std::endl;
-			// iterate down a column of B
-			for( ; mitr_b != b.End(); ++mitr_b)
+			double va = 0;
+			double vb = 0;
+			size_t current_A_column = (*A_row).key_;
+			size_t current_B_row = 0;
+			a.Retrieve(current_A_row, current_A_column, va);
+			
+			// Find a row of B that matches current_A_column
+			for(mitr_b = b.Begin() ; mitr_b != b.End(); ++mitr_b)
 			{
-				/*
-				typename fsu::SparseVector<N>::Iterator B_column_row = ((*mitr_b).data_).Begin();
-				
-				std::cout << "B_column_row: " << *B_column_row << std::endl;
-				// result_row = (*mitr_a.key_)
-				//result.input(row.mitr_a.key_, 
-			  */
+				if((*mitr_b).key_ == current_A_column)
+				{
+					current_B_row = (*mitr_b).key_;
+					break;
+				}
 			}
-		}
-		mitr_b = b.Begin();
+			
+			// calculate if there is a row of B equal to current_A_column
+			if(current_B_row != 0)
+			{
+				// get iterator for row of B
+				typename fsu::SparseVector<N>::Iterator brow = b[current_B_row].Begin();
+				while(brow != b[current_B_row].End())
+				{
+					vb = (*brow).data_;
+					std::cout << "calculating result[" << current_A_row << "][" << (*brow).key_ << "]= " << va << " * " << vb << std::endl;
+					result(current_A_row, (*brow).key_) += va * vb;
+					++brow;
+				}
+			}
+
+			++A_row;
+		} // while loop
+
 		std::cout << std::endl;
 	}
+	
   return result;
 } // SM*SM 
 
